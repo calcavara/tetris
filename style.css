@@ -1,17 +1,17 @@
 :root {
     --base-grid-size: 20rem;
-    --grid-blocks: 10;
+    --grid-blocks-per-line: 10;
 }
 
 .game-grid {
     width: var(--base-grid-size);
     height: calc(2 * var(--base-grid-size));
     display: grid;
-    grid-template-columns: repeat(var(--grid-blocks), 1fr);
-    grid-template-rows: repeat(calc(2 * var(--grid-blocks)), 1fr);
-    background-color: bisque;
+    grid-template-columns: repeat(var(--grid-blocks-per-line), 1fr);
+    grid-template-rows: repeat(calc(2 * var(--grid-blocks-per-line)), 1fr);
+    background-color: coral;
 }
 
-.game-grid div {
-    background-color: coral;
+.tetromino {
+    background-color: greenyellow;
 }
