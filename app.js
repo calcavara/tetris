@@ -5,6 +5,9 @@ const startBtn = document.querySelector("#start-button");
 const gridWidth = 10;
 const gridHeight = 20;
 const gridSize = gridWidth * gridHeight;
+let score = 0;
+let nextRandom = 0;
+let timerId;
 
 function insertGridUnits(parentElement) {
     for (let i = 0; i < gridSize; i++) {
@@ -16,25 +19,37 @@ insertGridUnits(gameGrid);
 
 let squares = Array.from(document.querySelectorAll(".game-grid div"));
 
-function identifyBorders() {
+function identifyLastLine() {
     // adds bottom border identifier
     for (let i = 0; i < gridWidth; i++) {
         squares[gridSize - 1 - i].classList.add("last-line");
     }
+}
 
+function identifyBorders() {
     // adds right border identifier
     for (let i = 0; i < gridHeight; i++) {
         squares[gridWidth * i + gridWidth - 1].classList.add("right-border");
         squares[gridWidth * i + gridWidth - 2].classList.add("right-border");
     }
 
+    // adds left border identifier
     for (let i = 0; i < gridHeight; i++) {
         squares[gridWidth * i].classList.add("left-border");
         squares[gridWidth * i + 1].classList.add("left-border");
     }
 }
 
+identifyLastLine();
 identifyBorders();
+
+function insertMiniGridUnits() {
+    for (let i = 0; i < 16; i++) {
+        miniGrid.appendChild(document.createElement("div"));
+    }
+}
+
+insertMiniGridUnits();
 
 // Tetrominoes Forms
 
@@ -96,9 +111,6 @@ function undraw() {
     })
 }
 
-// Make the Tetromino move down every second
-const timerId = setInterval(moveDown, 5000);
-
 // Assign functions to keyCodes
 function control(e) {
     if (e.keyCode === 37 || e.keyCode === 65 || e.keyCode === 100) {
@@ -129,9 +141,12 @@ function freezeLastLine() {
         current.forEach(gridPos => squares[gridPos + currentPosition].classList.add("taken"));
         // Start a new Tetromino
         currentPosition = 4;
-        random = Math.floor(Math.random() * theTetrominoes.length);
+        random = nextRandom;
+        nextRandom = Math.floor(Math.random() * theTetrominoes.length);
         current = theTetrominoes[random][currentRotation];
         draw();
+        displayMiniShape();
+        addScore();
     }
 }
 
@@ -140,9 +155,13 @@ function freezeTaken() {
         current.forEach(gridPos => squares[gridPos + currentPosition].classList.add("taken"));
         // Start a new Tetromino
         currentPosition = 4;
-        random = Math.floor(Math.random() * theTetrominoes.length);
+        random = nextRandom;
+        nextRandom = Math.floor(Math.random() * theTetrominoes.length);
         current = theTetrominoes[random][currentRotation];
         draw();
+        displayMiniShape();
+        addScore();
+        gameOver();
     }
 }
 
@@ -253,4 +272,73 @@ function rotate() {
     }
 
     draw();
+}
+
+// Display up-next Tetromino in mini-grid
+
+const miniSquares = document.querySelectorAll(".mini-grid div");
+const miniWidth = 4;
+const miniHeight = 4;
+const miniGridPos = 0;
+
+//the Tetrominos without rotations
+const upNextTetromino = [
+    [1, miniWidth + 1, miniWidth * 2 + 1, 2], // lTetromino
+    [miniWidth * 2, miniWidth + 1, miniWidth * 2 + 1, miniWidth + 2], // zTetromino
+    [miniWidth, 1, miniWidth + 1, miniWidth + 2], // tTetromino
+    [0, 1, miniWidth, miniWidth + 1], // oTetromino
+    [1, miniWidth + 1, miniWidth * 2 + 1, miniWidth * 3 + 1]  // iTetromino
+];
+
+function displayMiniShape() {
+    //remove previous Tetromino form
+    miniSquares.forEach(gridPos => {
+        gridPos.classList.remove("tetromino");
+    })
+    upNextTetromino[nextRandom].forEach(gridPos => miniSquares[gridPos + miniGridPos].classList.add("tetromino"));
+}
+
+// add functionality to the button
+startBtn.addEventListener("click", () => {
+    if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+    } else {
+        draw();
+        timerId = setInterval(moveDown, 500);
+        nextRandom = Math.floor(Math.random() * theTetrominoes.length);
+        displayMiniShape();
+    }
+})
+
+// add score
+function addScore() {
+    for (let i = 0; i < gridSize - 1; i += gridWidth) {
+        const row = [];
+
+        // fill roll positions to be analyzed
+        for (let j = 0; j < gridWidth; j++) {
+            row.push(i + j);
+        }
+
+        if (row.every(gridPos => squares[gridPos].classList.contains("taken"))) {
+            score += 10;
+            scoreDisplay.textContent = score.toString();
+            row.forEach(gridPos => {
+                squares[gridPos].classList.remove("taken", "last-line", "tetromino");
+            })
+            const squaresRemoved = squares.splice(i, gridWidth);
+            squares = squaresRemoved.concat(squares);
+            squares.forEach(cell => gameGrid.appendChild(cell));
+            identifyLastLine();
+        }
+    }
+}
+
+// Game Over
+function gameOver() {
+    if (current.some(gridPos => squares[gridPos + currentPosition].classList.contains("taken"))) {
+        scoreDisplay.textContent = "Game Over";
+        clearInterval(timerId);
+    }
 }
