@@ -2,12 +2,17 @@ const gameGrid = document.querySelector(".game-grid");
 const miniGrid = document.querySelector(".mini-grid");
 const scoreDisplay = document.querySelector("#score");
 const startBtn = document.querySelector("#start-button");
+const resultsPanel = document.querySelector(".results-panel");
+const panelScore = document.querySelector("#results-score");
+const restartBtn = document.querySelector("#restart-button");
 const gridWidth = 10;
 const gridHeight = 20;
 const gridSize = gridWidth * gridHeight;
 let score = 0;
 let nextRandom = 0;
 let timerId;
+let multiplier = 1;
+const tetrominoColors = ["#FFFF33", "#FD1C03", "#00FF00", "#099FFF", "#FF00CC"];
 
 function insertGridUnits(parentElement) {
     for (let i = 0; i < gridSize; i++) {
@@ -100,14 +105,14 @@ let current = theTetrominoes[random][currentRotation];
 // Draw the Tetromino
 function draw() {
     current.forEach(gridPos => {
-        squares[currentPosition + gridPos].classList.add("tetromino");
+        squares[currentPosition + gridPos].style.backgroundColor = tetrominoColors[random];
     })
 }
 
 // Undraw the Tetromino
 function undraw() {
     current.forEach(gridPos => {
-        squares[currentPosition + gridPos].classList.remove("tetromino");
+        squares[currentPosition + gridPos].style.backgroundColor = "";
     })
 }
 
@@ -144,9 +149,9 @@ function freezeLastLine() {
         random = nextRandom;
         nextRandom = Math.floor(Math.random() * theTetrominoes.length);
         current = theTetrominoes[random][currentRotation];
-        draw();
         displayMiniShape();
         addScore();
+        draw();
     }
 }
 
@@ -158,9 +163,9 @@ function freezeTaken() {
         random = nextRandom;
         nextRandom = Math.floor(Math.random() * theTetrominoes.length);
         current = theTetrominoes[random][currentRotation];
-        draw();
         displayMiniShape();
         addScore();
+        draw();
         gameOver();
     }
 }
@@ -293,19 +298,23 @@ const upNextTetromino = [
 function displayMiniShape() {
     //remove previous Tetromino form
     miniSquares.forEach(gridPos => {
-        gridPos.classList.remove("tetromino");
+        gridPos.style.backgroundColor = "";
     })
-    upNextTetromino[nextRandom].forEach(gridPos => miniSquares[gridPos + miniGridPos].classList.add("tetromino"));
+    upNextTetromino[nextRandom].forEach(gridPos => miniSquares[gridPos + miniGridPos].style.backgroundColor = tetrominoColors[nextRandom]);
 }
 
-// add functionality to the button
+// add functionality to the button Start/Pause
 startBtn.addEventListener("click", () => {
     if (timerId) {
         clearInterval(timerId);
         timerId = null;
+        startBtn.classList.toggle("stop");
+        startBtn.innerHTML = "&#x25B6;";
     } else {
+        startBtn.classList.toggle("stop");
+        startBtn.textContent = "| |";
         draw();
-        timerId = setInterval(moveDown, 500);
+        timerId = setInterval(moveDown, (500 / multiplier));
         nextRandom = Math.floor(Math.random() * theTetrominoes.length);
         displayMiniShape();
     }
@@ -322,15 +331,24 @@ function addScore() {
         }
 
         if (row.every(gridPos => squares[gridPos].classList.contains("taken"))) {
-            score += 10;
+            score += Math.floor(10 * multiplier);
             scoreDisplay.textContent = score.toString();
             row.forEach(gridPos => {
-                squares[gridPos].classList.remove("taken", "last-line", "tetromino");
+                squares[gridPos].classList.remove("taken", "last-line");
+                squares[gridPos].style.backgroundColor = "";
             })
             const squaresRemoved = squares.splice(i, gridWidth);
             squares = squaresRemoved.concat(squares);
             squares.forEach(cell => gameGrid.appendChild(cell));
             identifyLastLine();
+
+            multiplier = score/200 + 1;
+
+            clearInterval(timerId);
+
+            timerId = null;
+
+            timerId = setInterval(moveDown, (500 / multiplier))
         }
     }
 }
@@ -338,7 +356,31 @@ function addScore() {
 // Game Over
 function gameOver() {
     if (current.some(gridPos => squares[gridPos + currentPosition].classList.contains("taken"))) {
-        scoreDisplay.textContent = "Game Over";
+        panelScore.textContent = score.toString();
+        resultsPanel.classList.toggle("show-panel");
         clearInterval(timerId);
     }
 }
+
+// Reset game for another round
+function resetGame() {
+    timerId = null;
+    score = 0;
+    multiplier = 1;
+    nextRandom = 0;
+    currentPosition = 4;
+    currentRotation = 0;    
+    scoreDisplay.textContent = "0";
+    startBtn.classList.toggle("stop");
+    startBtn.innerHTML = "&#x25B6;";
+    gameGrid.innerHTML = "";
+    insertGridUnits(gameGrid);
+    squares = Array.from(document.querySelectorAll(".game-grid div"));
+    identifyLastLine();
+    identifyBorders();
+
+
+    resultsPanel.classList.toggle("show-panel");
+}
+
+restartBtn.addEventListener("click", resetGame);

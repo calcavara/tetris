@@ -3,23 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TetrisSalto</title>
+    <title>Tetris</title>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-
-    <p>Score: <span id="score">0</span></p>
-    <button id="start-button">Start/Pause</button>
     
     <div class="grids-container">
 
         <div class="game-grid">
 
         </div>
-    
-        <div class="mini-grid">
+        
+        <div class="side-panel">
+
+            <h1>Tetris</h1>
+
+            <p>Up next</p>
+            <div class="mini-grid">
             
+            </div>
+
+            <p>Score: <span id="score">0</span> points</p>
+            <button id="start-button">&#x25B6;</button>
+
         </div>
+
+    </div>
+
+    <div class="results-panel">
+
+        <h2 class="score-heading">Your score was:</h2>
+        
+        <p><span id="results-score">0</span> points</p>
+
+        <button id="restart-button">Try again?</button>
 
     </div>
 
